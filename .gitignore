@@ -213,3 +213,6 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+.stylish-haskell.yaml
+Test.hs
+stdlib.hs
