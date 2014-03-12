@@ -6,8 +6,8 @@ import Language.Haskell.Exts
 -- Disable module Name, default is Main even if you omit it
 isCoreModuleName :: ModuleName -> Bool
 isCoreModuleName (ModuleName mn) 
-	| mn == "Main" = True
-	| otherwise = False
+    | mn == "Main" = True
+    | otherwise = False
 
 -- Disable all module pragma
 isCoreModulePragma :: [ModulePragma] -> Bool
@@ -37,12 +37,12 @@ isCoreImportDecl _ = error "You can't use import declaration."
 -- d: the declaration, ns: the name defined in current file
 isCoreDecl :: [Decl] -> Bool
 isCoreDecl ds = all (isCoreDecl' names) ds
-	  where 
-	  	names = getNames ds
-	  	isCoreDecl' ns (PatBind _ p t r b) = 
-	  		isCorePat ns p && isCoreType  t &&
-	  		isCoreRhs ns r && isCoreBinds b
-	  	isCoreDecl' _ _ = error "You can only use pattern binding." 
+      where 
+        names = getNames ds
+        isCoreDecl' ns (PatBind _ p t r b) = 
+            isCorePat ns p && isCoreType  t &&
+            isCoreRhs ns r && isCoreBinds b
+        isCoreDecl' _ _ = error "You can only use pattern binding." 
 
 
 
@@ -71,8 +71,8 @@ isCoreExp ns (List es) = all (isCoreExp ns) es
 isCoreExp ns (Paren e) = isCoreExp ns e
 isCoreExp ns (If e1 e2 e3) = isCoreExp ns e1 && isCoreExp ns e2 && isCoreExp ns e3 
 isCoreExp _ _ = error (
-	"You can only use lambda expression," ++
-	"parenthesis, list, if and operator defined in core-haskell." )
+    "You can only use lambda expression," ++
+    "parenthesis, list, if and operator defined in core-haskell." )
 
 isCoreQOp :: QOp -> Bool
 isCoreQOp (QVarOp qn) = isCoreQName [] qn
@@ -96,10 +96,10 @@ isCoreQName _ (Special s) = isCoreSpecialCon s
 
 isCoreName :: [String] -> Name -> Bool
 isCoreName ns (Ident s) = s `elem` ["div", "mod", "not", "head", "tail", "False", "True"] ++ ns
-	||  error ("You can't use " ++ show s)
+    ||  error ("You can't use " ++ show s)
 isCoreName ns (Symbol s) = s `elem` 
-	["+", "-", "*", "&&", "||", "==", "/=", "<=", ">=", "<", ">"] ++ ns
-		||  error ("You can't use " ++ show s)
+    ["+", "-", "*", "&&", "||", "==", "/=", "<=", ">=", "<", ">"] ++ ns
+        ||  error ("You can't use " ++ show s)
 
 isCoreSpecialCon :: SpecialCon -> Bool
 isCoreSpecialCon (Cons) = True
@@ -114,27 +114,27 @@ isCoreLiterial _ = error "You can only use Char String Int"
 -- Get name of definition recursively, including symbol and identifier
 getNames :: [Decl] -> [String]
 getNames = concatMap getName
-	where
-		getName (PatBind _ p _ r _) = getNameFromPat p : getNameFromRhs r
-			where 
-				getNameFromPat (PVar (Ident  n)) = n
-				getNameFromPat (PVar (Symbol n)) = n
-				getNameFromRhs (UnGuardedRhs e) = getNameFromExp e
-					where
-						getNameFromExp (InfixApp e1 _ e2) = getNameFromExp e1 ++ getNameFromExp e2
-						getNameFromExp (App e1 e2) = getNameFromExp e1 ++ getNameFromExp e2
-						getNameFromExp (NegApp e1) = getNameFromExp e1
-						getNameFromExp (Lambda _ ps e1) = getNameFromExp e1 ++ map getNameFromPat ps
-						getNameFromExp (List es) = concatMap getNameFromExp es
-						getNameFromExp (Paren e1) = getNameFromExp e1
-						getNameFromExp (If e1 e2 e3) = getNameFromExp e1 ++ getNameFromExp e2 ++ getNameFromExp e3
-						getNameFromExp _ = []
+    where
+        getName (PatBind _ p _ r _) = getNameFromPat p : getNameFromRhs r
+            where 
+                getNameFromPat (PVar (Ident  n)) = n
+                getNameFromPat (PVar (Symbol n)) = n
+                getNameFromRhs (UnGuardedRhs e) = getNameFromExp e
+                    where
+                        getNameFromExp (InfixApp e1 _ e2) = getNameFromExp e1 ++ getNameFromExp e2
+                        getNameFromExp (App e1 e2) = getNameFromExp e1 ++ getNameFromExp e2
+                        getNameFromExp (NegApp e1) = getNameFromExp e1
+                        getNameFromExp (Lambda _ ps e1) = getNameFromExp e1 ++ map getNameFromPat ps
+                        getNameFromExp (List es) = concatMap getNameFromExp es
+                        getNameFromExp (Paren e1) = getNameFromExp e1
+                        getNameFromExp (If e1 e2 e3) = getNameFromExp e1 ++ getNameFromExp e2 ++ getNameFromExp e3
+                        getNameFromExp _ = []
 
 isCoreModule :: Module -> Bool
 isCoreModule (Module _ mn mp wt es im d) = 
-	isCoreModuleName  mn && isCoreModulePragma mp &&
-	isCoreWarningText wt && isCoreExportSpec   es &&
-	isCoreImportDecl  im && isCoreDecl         d
+    isCoreModuleName  mn && isCoreModulePragma mp &&
+    isCoreWarningText wt && isCoreExportSpec   es &&
+    isCoreImportDecl  im && isCoreDecl         d
 
 
 getModule :: String -> IO Module
@@ -147,9 +147,9 @@ getModule mPath = do
 --main :: IO ()
 --main = do
 
---	m <- getModule
---	--print m
---	mapM_ putStrLn (decl m)		
---	print (isCoreModule m)
+--  m <- getModule
+--  --print m
+--  mapM_ putStrLn (decl m)     
+--  print (isCoreModule m)
 
-	
+    
