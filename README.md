@@ -13,6 +13,12 @@ First, install [Haskell Platform](http://www.haskell.org/platform/).
 
 Then open your terminal or powershell, type following command.
 
+## Via cabal (Recommand)
+```
+cabal install core-haskell
+```
+
+## Manually
 ```bash
 cabal install hint haskeline haskell-src-exts
 git clone https://github.com/happlebao/Core-Haskell.git
