@@ -1,4 +1,7 @@
 Name:                   core-haskell
+License:                BSD3
+License-file:           LICENSE
+Category:               Language, Compilers/Interpreters
 Version:                0.6
 Build-Type:             Simple
 Synopsis:               A subset of Haskell using in UCC for teaching purpose
