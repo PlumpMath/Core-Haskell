@@ -1,6 +1,6 @@
 module SyntaxChecker (isCoreModule, getModule) where
 
-import Language.Haskell.Exts
+import           Language.Haskell.Exts
 
 
 -- Disable module Name, default is Main even if you omit it
@@ -96,7 +96,7 @@ isCoreQName qns (UnQual n) = isCoreName qns n
 isCoreQName _ (Special s) = isCoreSpecialCon s
 
 isCoreName :: [String] -> Name -> Bool
-isCoreName ns (Ident s) = s `elem` 
+isCoreName ns (Ident s) = s `elem`
     ["div", "mod", "not", "head", "tail", "False", "True"] ++ ns
     -- H1-simple.pdf
     ++ ["null", "length", "elem"]
@@ -115,7 +115,7 @@ isCoreName ns (Symbol s) = s `elem`
 
 -- Get name from top level definitions
 getNames :: [Decl] -> [String]
-getNames = map getName 
+getNames = map getName
         where
         getName (PatBind _ p _ _ _) = getNameFromPat p
         getName _ = error "You can only use pattern binding"
@@ -136,12 +136,16 @@ isCoreLiterial (Int _) = True
 isCoreLiterial _ = error "You can only use Char String Int"
 
 
-
+-- Check the whole module/file
 isCoreModule :: Module -> Bool
 isCoreModule (Module _ mn mp wt es im d) =
     isCoreModuleName  mn && isCoreModulePragma mp &&
     isCoreWarningText wt && isCoreExportSpec   es &&
     isCoreImportDecl  im && isCoreDecl         d
+
+-- Check single statement whithin interpreter
+isCoreStatement :: String -> Bool
+isCoreStatement = undefined
 
 
 getModule :: String -> IO Module
