@@ -15,7 +15,7 @@ Then open your terminal or powershell, type following command.
 
 ```bash
 cabal install hint haskeline haskell-src-exts
-https://github.com/happlebao/Core-Haskell.git
+git clone https://github.com/happlebao/Core-Haskell.git
 runghc Setup configure --user
 runghc Setup build
 runghc Setup install
