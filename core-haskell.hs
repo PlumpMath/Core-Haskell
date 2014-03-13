@@ -5,6 +5,7 @@ import Language.Haskell.Interpreter
 import SyntaxChecker
 import System.Console.Haskeline
 import System.Environment (getArgs)
+import Control.Monad
 
 main :: IO ()
 main = do
@@ -15,8 +16,7 @@ main = do
         _  -> do
                 m <- getModule fPath
                 let ns = getNames m
-                if isCoreModule ns m then run ns fPath
-                else error "This is not a vaild Core Haskell Source file."
+                when (isCoreModule ns m) (run ns fPath)
 
 run :: [String] -> String -> IO ()
 run ns fPath = runInputT defaultSettings (loop fPath) where
