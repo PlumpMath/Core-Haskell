@@ -32,8 +32,7 @@ isCoreImportDecl [] = True
 isCoreImportDecl _ = error "You can't use import declaration."
 
 -- Check top-level declaration
--- todo FunBind
--- todo match a list of data type using pattern matching
+-- FunBind example: f n = n + 1
 -- d: the declaration, ns: the name defined in current file
 isCoreDecl :: [Decl] -> Bool
 isCoreDecl ds = all (isCoreDecl' names) ds
@@ -66,7 +65,9 @@ isCoreExp _ (Lit l) = isCoreLiterial l
 isCoreExp ns (InfixApp e1 qop e2) = isCoreExp ns e1 && isCoreExp ns e2 && isCoreQOp qop
 isCoreExp ns (App e1 e2) = isCoreExp ns e1 && isCoreExp ns e2
 isCoreExp ns (NegApp e) = isCoreExp ns e
-isCoreExp ns (Lambda _ ps e) = all (isCorePat ns) ps && isCoreExp ns e
+-- ns: names, vs: variables
+isCoreExp ns (Lambda _ ps e) = all (isCorePat (ns ++ vs)) ps && isCoreExp (ns ++ vs) e
+    where vs = map getNameFromPat ps
 isCoreExp ns (List es) = all (isCoreExp ns) es
 isCoreExp ns (Paren e) = isCoreExp ns e
 isCoreExp ns (If e1 e2 e3) = isCoreExp ns e1 && isCoreExp ns e2 && isCoreExp ns e3
@@ -95,11 +96,24 @@ isCoreQName qns (UnQual n) = isCoreName qns n
 isCoreQName _ (Special s) = isCoreSpecialCon s
 
 isCoreName :: [String] -> Name -> Bool
-isCoreName ns (Ident s) = s `elem` ["div", "mod", "not", "head", "tail", "False", "True"] ++ ns
+isCoreName ns (Ident s) = s `elem` 
+    ["div", "mod", "not", "head", "tail", "False", "True"] ++ ns
     ||  error ("You can't use " ++ show s)
 isCoreName ns (Symbol s) = s `elem`
     ["+", "-", "*", "&&", "||", "==", "/=", "<=", ">=", "<", ">"] ++ ns
-        ||  error ("You can't use " ++ show s)
+    ||  error ("You can't use " ++ show s)
+
+-- Get name from top level definitions
+getNames :: [Decl] -> [String]
+getNames = map getName 
+        where
+        getName (PatBind _ p _ _ _) = getNameFromPat p
+        getName _ = error "You can only use pattern binding"
+
+getNameFromPat :: Pat -> String
+getNameFromPat (PVar (Ident  n)) = n
+getNameFromPat (PVar (Symbol n)) = n
+getNameFromPat _ = error "You can't use pattern matching."
 
 isCoreSpecialCon :: SpecialCon -> Bool
 isCoreSpecialCon (Cons) = True
@@ -111,24 +125,7 @@ isCoreLiterial (String _) = True
 isCoreLiterial (Int _) = True
 isCoreLiterial _ = error "You can only use Char String Int"
 
--- Get name of definition recursively, including symbol and identifier
-getNames :: [Decl] -> [String]
-getNames = concatMap getName
-    where
-        getName (PatBind _ p _ r _) = getNameFromPat p : getNameFromRhs r
-            where
-                getNameFromPat (PVar (Ident  n)) = n
-                getNameFromPat (PVar (Symbol n)) = n
-                getNameFromRhs (UnGuardedRhs e) = getNameFromExp e
-                    where
-                        getNameFromExp (InfixApp e1 _ e2) = getNameFromExp e1 ++ getNameFromExp e2
-                        getNameFromExp (App e1 e2) = getNameFromExp e1 ++ getNameFromExp e2
-                        getNameFromExp (NegApp e1) = getNameFromExp e1
-                        getNameFromExp (Lambda _ ps e1) = getNameFromExp e1 ++ map getNameFromPat ps
-                        getNameFromExp (List es) = concatMap getNameFromExp es
-                        getNameFromExp (Paren e1) = getNameFromExp e1
-                        getNameFromExp (If e1 e2 e3) = getNameFromExp e1 ++ getNameFromExp e2 ++ getNameFromExp e3
-                        getNameFromExp _ = []
+
 
 isCoreModule :: Module -> Bool
 isCoreModule (Module _ mn mp wt es im d) =
@@ -142,14 +139,14 @@ getModule mPath = do
     src <- readFile mPath
     --src <- readFile "./hello_world.hs"
     return . fromParseResult $ parseModule src
---decl :: Module -> [String]
---decl (Module _ _ _ _ _ _ ds) = map show ds
---main :: IO ()
---main = do
 
---  m <- getModule
---  --print m
---  mapM_ putStrLn (decl m)
---  print (isCoreModule m)
+ --below just used for test the parse result of haskell-src-ext
+printAlldecl :: Module -> IO()
+printAlldecl (Module _ _ _ _ _ _ ds) = mapM_  print ds
 
-
+main :: IO ()
+main = do
+  m <- getModule "Hello.hs"
+  print m
+  --printAlldecl m
+  --print (isCoreModule m)
