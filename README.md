@@ -9,8 +9,9 @@ It enables a tiny subset of Haskell default, but the syntax can be customized,
 teacher can enable more syntax along with the teaching progress.
 
 # How to Install
+First, install [Haskell Platform](http://www.haskell.org/platform/).
 
-Open your terminal or powershell, type following command.
+Then open your terminal or powershell, type following command.
 
 ```bash
 cabal install hint haskeline haskell-src-exts
@@ -20,4 +21,7 @@ runghc Setup build
 runghc Setup install
 ```
 
-Then type `core-haskell` will invoke programme.
+Finally type `core-haskell` to invoke programme.
+
+# Usage
+`core-haskell` or `core-haskell filename`
