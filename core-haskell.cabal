@@ -17,8 +17,7 @@ executable core-haskell
     main-is: core-haskell.hs
     Default-Language: Haskell2010
     Build-Depends:      base == 4.6.*,
-                        ghc == 7.6.*,
                         haskeline,
-                        haskell-src-exts == 1.14.*,
+                        haskell-src-exts,
                         hint
     Buildable:          True
