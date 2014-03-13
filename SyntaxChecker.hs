@@ -98,6 +98,16 @@ isCoreQName _ (Special s) = isCoreSpecialCon s
 isCoreName :: [String] -> Name -> Bool
 isCoreName ns (Ident s) = s `elem` 
     ["div", "mod", "not", "head", "tail", "False", "True"] ++ ns
+    -- H1-simple.pdf
+    ++ ["null", "length", "elem"]
+    -- H2-map_filter.pdf
+    ++ ["map"]
+    -- H3-foldr.pdf
+    ++ ["foldr", "foldl", "and", "all", "any", "elem", "sum", "filter"]
+    -- H4-ListUtils
+    ++ ["drop", "take", "dropWhile", "zip", "zipWith"]
+    -- H6-Accumulators
+    ++ ["max", "min"]
     ||  error ("You can't use " ++ show s)
 isCoreName ns (Symbol s) = s `elem`
     ["+", "-", "*", "&&", "||", "==", "/=", "<=", ">=", "<", ">"] ++ ns
