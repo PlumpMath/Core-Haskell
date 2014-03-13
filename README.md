@@ -26,7 +26,9 @@ runghc Setup configure --user
 runghc Setup build
 runghc Setup install
 ```
+
 Add `bin` directory to your `PATH`
+
 For Ubunte && Bash
 ```bash
 export PATH=~/.cabal/bin:$PATH
