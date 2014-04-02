@@ -5,7 +5,6 @@ import Language.Haskell.Interpreter
 import SyntaxChecker
 import System.Console.Haskeline
 import System.Environment (getArgs)
-import Control.Monad
 
 main :: IO ()
 main = do
@@ -14,9 +13,11 @@ main = do
     case fPath of
         "" -> run [] fPath
         _  -> do
-                m <- getModule fPath
-                let ns = getNames m
-                when (isCoreModule ns m) (run ns fPath)
+            m <- getModule fPath
+            let ns = getNames m
+            case isCoreModule ns m of
+                Right _ -> run ns fPath
+                Left errs -> error (concatMap show errs)
 
 run :: [String] -> String -> IO ()
 run ns fPath = runInputT defaultSettings (loop fPath) where
@@ -67,9 +68,10 @@ evaluate' ns fPath expr = do
                 -- todo handle custom module name, instead of harded coded Main
                 setTopLevelModules ["Main"]
                 --getModuleExports mPath
-            evalExpr expression = 
-                if isCoreExpression ns expr then do
-                    setImportsQ [("Prelude", Nothing)]
-                    result <- eval expression
-                    return (show result)
-                else error "This is not a vaild haskell statement"
+            evalExpr expression =  
+                case isCoreExpression ns expr of 
+                    Right _ -> do
+                        setImportsQ [("Prelude", Nothing)]
+                        result <- eval expression
+                        return (show result)
+                    Left errs -> return (concat (map show errs))
