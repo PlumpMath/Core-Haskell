@@ -145,7 +145,6 @@ isCoreType src (Just(TyParen _)) = Left (NotAllowed "TyParen" (startLine src))
 isCoreType src (Just(TyInfix _ _ _)) = Left (NotAllowed "TyInfix" (startLine src))
 isCoreType src (Just(TyKind _ _)) = Left (NotAllowed "TyKind" (startLine src))
 
-
 isCoreRhs :: [String] -> SrcLoc -> Rhs -> Either [CoreError] Bool
 isCoreRhs ns src (UnGuardedRhs expr) = isCoreExp ns src expr
 isCoreRhs _ src (GuardedRhss _) = Left [(NotAllowed "GuardedRhss" (startLine src))]
@@ -155,7 +154,6 @@ isCoreBinds src (BDecls []) = Right True
 isCoreBinds src (IPBinds []) = Right True
 isCoreBinds src (BDecls _) = Left (NotAllowed "BDecls" (startLine src))
 isCoreBinds src (IPBinds _) = Left (NotAllowed "IPBinds" (startLine src))
-
 
 isCoreExp :: [String] -> SrcLoc -> Exp -> Either [CoreError] Bool
 isCoreExp ns src (Var qn) = (isCoreQName ns src qn) `appendErrors` (Right True)
@@ -215,18 +213,11 @@ isCoreQOp :: [String] -> SrcLoc -> QOp -> Either CoreError Bool
 isCoreQOp ns src (QVarOp qn) = isCoreQName ns src qn
 isCoreQOp ns src (QConOp qn) = isCoreQName ns src qn
 
-
-
-
 -- main function
-
 isCoreQName :: [String] -> SrcLoc -> QName -> Either CoreError Bool
 isCoreQName _ src (Qual _ _) = error "You can't import module"
 isCoreQName ns src (UnQual n) = isCoreName ns src n
 isCoreQName _ src (Special s) = isCoreSpecialCon src s
-
-
-
 
 isCoreSpecialCon :: SrcLoc -> SpecialCon -> Either CoreError Bool
 isCoreSpecialCon src UnitCon = Left (NotAllowed "UnitCon" (startLine src))
@@ -249,8 +240,6 @@ isCoreLiterial src (PrimFloat _) = Left (NotAllowed "PrimFloat" (startLine src))
 isCoreLiterial src (PrimDouble _) = Left (NotAllowed "PrimDouble" (startLine src))
 isCoreLiterial src (PrimChar _) = Left (NotAllowed "PrimChar" (startLine src))
 isCoreLiterial src (PrimString _) = Left (NotAllowed "PrimString" (startLine src))
-
-
 
 isCoreName :: [String] -> SrcLoc -> Name -> Either CoreError Bool
 isCoreName ns src (Ident i) = if i `elem` ns 
@@ -310,9 +299,11 @@ getModule mPath = do
     return . fromParseResult $ parseModule src
 
  --below just used for test the parse result of haskell-src-ext
+printAlldecl :: Module -> IO()
+printAlldecl (Module _ _ _ _ _ _ ds) = mapM_  print ds
+
 main :: IO ()
 main = do
   m <- getModule "Hello.hs"
-  (putStrLn . prettyPrint) m
-  putStrLn "\n"
-  --print (isCoreModule m)
+  print m
+  printAlldecl m
