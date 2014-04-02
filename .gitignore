@@ -216,3 +216,8 @@ pip-log.txt
 .stylish-haskell.yaml
 Test.hs
 stdlib.hs
+*.dmp
+*.xlsx
+Hello.hs
+learning_test.hs
+Hello.hs
