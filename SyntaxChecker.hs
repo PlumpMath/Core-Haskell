@@ -263,12 +263,10 @@ getNames :: Module -> [String]
 getNames (Module _ _ _ _ _ _ ds) = map getName ds
         where
         getName (PatBind _ p _ _ _) = getNameFromPat p
-        getName _ = error "You can only use pattern binding"
 
 getNameFromPat :: Pat -> String
 getNameFromPat (PVar (Ident  n)) = n
 getNameFromPat (PVar (Symbol n)) = n
-getNameFromPat _ = error "You can't use pattern matching."
 
 
 
@@ -287,7 +285,6 @@ isCoreExpression :: [String] -> String -> Either [CoreError] Bool
 isCoreExpression ns expr = isCoreExp ns 
     SrcLoc { srcFilename  = "Unknown", srcLine  = 1, srcColumn  =1}
     (fromParseResult (parseExp expr))
-    -- isCoreDecl [fromParseResult (parseDecl expr)] 
 
 
 getModule :: String -> IO Module
