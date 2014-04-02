@@ -52,6 +52,7 @@ evaluate ns fPath expr = do
 evaluate' :: [String] -> String -> String -> InterpreterT IO String
 evaluate' ns fPath expr = do
     -- you can't end with ...hs\ or ...hs/
+    -- todo -3??
     let mPath = take (length fPath -3) fPath
     case mPath of
         "" -> evalExpr expr
