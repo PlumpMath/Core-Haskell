@@ -1,7 +1,7 @@
 module Main where
 
 import Data.List (isSuffixOf)
-import Language.Haskell.Interpreter 
+import Language.Haskell.Interpreter
 import SyntaxChecker
 import System.Console.Haskeline
 import System.Environment (getArgs)
@@ -53,25 +53,18 @@ evaluate con fPath expr = do
     evaluate' :: InterpreterT IO String
     evaluate' = do
         -- you can't end with ...hs\ or ...hs/
-        -- todo -3??
-        let mPath = take (length fPath -3) fPath
-        case mPath of
+        case fPath of
             "" -> evalExpr expr
             _  -> do
-                loadFile mPath
-                --liftIO (putStrLn ("Module Loaded: " ++ mPath))
+                loadModules [fPath]
+                -- todo handle custom module name, instead of harded coded Main
+                setTopLevelModules ["Main"]
+                --liftIO (putStrLn ("Module Loaded: " ++ fPath))
                 evalExpr expr
-            where
-                -- Only test with current directory
-                loadFile mPath = do
-                    loadModules [mPath ++ ".hs"]
-                    -- todo handle custom module name, instead of harded coded Main
-                    setTopLevelModules ["Main"]
-                    --getModuleExports mPath
-                evalExpr expression =  
-                    case isCoreExpression con expr of 
-                        Right _ -> do
-                            setImportsQ [("Prelude", Nothing)]
-                            result <- eval expression
-                            return (show result)
-                        Left errs -> return (concat (map show errs))
+        where evalExpr expression =  
+                case isCoreExpression con expr of 
+                    Right _ -> do
+                        setImportsQ [("Prelude", Nothing)]
+                        result <- eval expression
+                        return (show result)
+                    Left errs -> return (concat (map show errs))
