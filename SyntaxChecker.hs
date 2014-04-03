@@ -45,6 +45,8 @@ lerrs        `addErrors` (Right _) = lerrs
 singletonErrors :: Either CoreError Bool -> Either [CoreError] Bool
 singletonErrors (Right r) = Right r
 singletonErrors (Left err) = Left [err]
+
+-- The name of a Haskell module. 
 -- Disable module Name, default is Main even if you omit it
 isCoreModuleName :: ModuleName -> Either CoreError Bool
 isCoreModuleName (ModuleName mn)
@@ -52,16 +54,19 @@ isCoreModuleName (ModuleName mn)
     | otherwise = Left (OnlyAllowed " Module" 
         SrcLoc { srcFilename  = "Unknown", srcLine  = 1, srcColumn  =1})
 
+-- A top level options pragma, preceding the module header. 
 -- Disable all module pragma
 isCoreModulePragma :: [ModulePragma] -> Either CoreError Bool
 isCoreModulePragma [] = Right True
 isCoreModulePragma _ = Left (NotAllowedHeader "ModulePragma")
 
+-- Warning text to optionally use in the module header of e.g. a deprecated module. 
 -- Disable all warning text
 isCoreWarningText :: Maybe WarningText -> Either CoreError Bool
 isCoreWarningText Nothing = Right True
 isCoreWarningText _ = Left (NotAllowedHeader "WarningText")
 
+-- An item in a module's export specification. 
 -- Disable all export specification
 isCoreExportSpec :: Maybe [ExportSpec] -> Either CoreError Bool
 isCoreExportSpec Nothing = Right True
@@ -69,6 +74,7 @@ isCoreExportSpec Nothing = Right True
 isCoreExportSpec (Just [EVar (UnQual (Ident n))]) | n == "main" = Right True
 isCoreExportSpec _ = Left (NotAllowedHeader "ExportSpec")
 
+-- An import declaration. 
 -- Disable all import declaration
 isCoreImportDecl ::  [ImportDecl] -> Either CoreError Bool
 isCoreImportDecl [] = Right True
@@ -174,8 +180,8 @@ isCorePat _ src (PExplTypeArg {}) = Left [NotAllowed "PExplTypeArg" src]
 isCorePat _ src (PQuasiQuote {}) = Left [NotAllowed "PQuasiQuote" src]
 isCorePat _ src (PBangPat _) = Left [NotAllowed "PBangPat" src]
 
+-- A type qualified with a context. An unqualified type has an empty context. 
 isCoreType :: SyntaxConfig -> SrcLoc -> Type -> Either [CoreError] Bool
---isCoreType _ _ Nothing = Right True
 isCoreType con src (TyForall Nothing as t ) = 
     mergeErrors (isCoreAsst con src) as
     `addErrors` isCoreType con src t
@@ -196,6 +202,10 @@ isCoreType _ src (TyParen _) = Left [NotAllowed "TyParen" src]
 isCoreType _ src (TyInfix {}) = Left [NotAllowed "TyInfix" src]
 isCoreType _ src (TyKind {}) = Left [NotAllowed "TyKind" src]
 
+-- Class assertions. In Haskell 98, the argument would be a tyvar, 
+-- but this definition allows multiple parameters, 
+-- and allows them to be types. 
+-- Also extended with support for implicit parameters and equality constraints. 
 isCoreAsst :: SyntaxConfig -> SrcLoc -> Asst -> Either [CoreError] Bool
 isCoreAsst con src (ClassA qn ts) = appendErrors (isCoreQName con' src qn)
     (mergeErrors (isCoreType con src) ts)
@@ -204,6 +214,7 @@ isCoreAsst _ src (InfixA {}) = Left [NotAllowed "InfixA" src]
 isCoreAsst _ src (IParam {}) = Left [NotAllowed "IParam" src] 
 isCoreAsst _ src (EqualP {}) = Left [NotAllowed "EqualP" src]
 
+-- The right hand side of a function or pattern binding. 
 isCoreRhs :: SyntaxConfig -> SrcLoc -> Rhs -> Either [CoreError] Bool
 isCoreRhs con src (UnGuardedRhs expr) = isCoreExp con src expr
 isCoreRhs con src (GuardedRhss rhs) = if enableGuardedRhss con
@@ -213,6 +224,7 @@ isCoreRhs con src (GuardedRhss rhs) = if enableGuardedRhss con
             mergeErrors (isCoreStmt con src') ss
             `addErrors` isCoreExp con src' e
 
+-- A binding group inside a let or where clause. 
 isCoreBinds :: SyntaxConfig -> SrcLoc -> Binds -> Either CoreError Bool
 isCoreBinds _ _ (BDecls []) = Right True
 isCoreBinds _ _ (IPBinds []) = Right True
@@ -291,8 +303,8 @@ isCoreExp _ src (RightArrApp {}) = Left [NotAllowed "RightArrApp" src]
 isCoreExp _ src (LeftArrHighApp {}) = Left [NotAllowed "LeftArrHighApp" src]
 isCoreExp _ src (RightArrHighApp {}) = Left [NotAllowed "RightArrHighApp" src]
 
---A general transqual in a list comprehension, 
---which could potentially be a transform of the kind enabled by TransformListComp. 
+-- A general transqual in a list comprehension, 
+-- which could potentially be a transform of the kind enabled by TransformListComp. 
 isCoreQualStmt :: SyntaxConfig -> SrcLoc -> QualStmt -> Either [CoreError] Bool
 isCoreQualStmt con src (QualStmt s) = isCoreStmt con src s
 isCoreQualStmt _ src (ThenTrans _) = Left [NotAllowed "ThenTrans" src]
@@ -300,9 +312,9 @@ isCoreQualStmt _ src (ThenBy {}) = Left [NotAllowed "ThenBy" src]
 isCoreQualStmt _ src (GroupBy _) = Left [NotAllowed "GroupBy" src]
 isCoreQualStmt _ src (GroupUsing _) = Left [NotAllowed "GroupUsing" src]
 isCoreQualStmt _ src (GroupByUsing {}) = Left [NotAllowed "GroupByUsing" src]
---isCoreQualStmt
---A statement, representing both a stmt in a do-expression, 
---an ordinary qual in a list comprehension, as well as a stmt in a pattern guard. 
+
+-- A statement, representing both a stmt in a do-expression, 
+-- an ordinary qual in a list comprehension, as well as a stmt in a pattern guard. 
 isCoreStmt :: SyntaxConfig -> SrcLoc -> Stmt -> Either [CoreError] Bool
 isCoreStmt con _ (Generator src p e) = isCorePat con src p 
     `addErrors` isCoreExp con src e
@@ -310,16 +322,19 @@ isCoreStmt con src (Qualifier e) = isCoreExp con src e
 isCoreStmt con src (LetStmt ls) = singletonErrors (isCoreBinds con src ls)
 isCoreStmt con src (RecStmt rs) = mergeErrors (isCoreStmt con src) rs
 
+-- Possibly qualified infix operators (qop), appearing in expressions. 
 isCoreQOp :: SyntaxConfig -> SrcLoc -> QOp -> Either CoreError Bool
 isCoreQOp con src (QVarOp qn) = isCoreQName con src qn
 isCoreQOp con src (QConOp qn) = isCoreQName con src qn
 
--- main function
+-- This type is used to represent qualified variables, and also qualified constructors. 
 isCoreQName :: SyntaxConfig -> SrcLoc -> QName -> Either CoreError Bool
 isCoreQName _ src (Qual {}) = Left (NotAllowed "Qual" src)
 isCoreQName con src (UnQual n) = isCoreName con src n
 isCoreQName _ src (Special s) = isCoreSpecialCon src s
 
+-- Constructors with special syntax. 
+-- These names are never qualified, and always refer to builtin type or data constructors
 isCoreSpecialCon :: SrcLoc -> SpecialCon -> Either CoreError Bool
 isCoreSpecialCon src UnitCon = Left (NotAllowed "UnitCon" src)
 isCoreSpecialCon src ListCon = Left (NotAllowed "ListCon" src)
@@ -348,6 +363,7 @@ isCoreLiterial _ src (PrimDouble _) = Left (NotAllowed "PrimDouble" src)
 isCoreLiterial _ src (PrimChar _) = Left (NotAllowed "PrimChar" src)
 isCoreLiterial _ src (PrimString _) = Left (NotAllowed "PrimString" src)
 
+-- This type is used to represent variables, and also constructors. 
 isCoreName :: SyntaxConfig -> SrcLoc -> Name -> Either CoreError Bool
 isCoreName con src (Ident i) = if i `elem` getNames con
     ++ ["div", "mod", "not", "head", "tail", "False", "True"] 
@@ -368,7 +384,6 @@ isCoreName con src (Symbol s) = if s `elem` getSymbols con ++
 
 
 -- Get name from top level definitions
--- todo check again
 getNamesFromTop :: Module -> [String]
 getNamesFromTop (Module _ _ _ _ _ _ ds) = 
     concatMap getNameFromTop ds where
@@ -400,6 +415,7 @@ getTypesFromType (TyList t) = getTypesFromType t
 getTypesFromType (TyCon(UnQual n)) = [getNameFromName n]
 getTypesFromType (TyVar n) = [getNameFromName n]
 getTypesFromType _ = []
+
 -- Check the whole module/file
 isCoreModule :: SyntaxConfig -> Module -> Either [CoreError] Bool
 isCoreModule con (Module _ mn mp wt es im ds) = mergeError 
