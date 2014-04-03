@@ -95,8 +95,8 @@ isCoreDecl con = mergeErrors isCoreDecl' where
     isCoreDecl' (DefaultDecl src _) = Left [NotAllowed "DefaultDecl" src]
     isCoreDecl' (SpliceDecl src _) = Left [NotAllowed "SpliceDecl" src]
     isCoreDecl' (TypeSig src ns t) = if enableTypeSig con
-        then (isCoreType con' src t)
-        `addErrors` (mergeError(map (isCoreName con src) ns))
+        then isCoreType con' src t
+        `addErrors` mergeError(map (isCoreName con src) ns)
         else Left [NotAllowed "TypeSig" src]
         where con' = updatedTypes (getTypesFromType t) con
     isCoreDecl' (FunBind ms) = mergeErrors (isCoreMatch con) ms
@@ -122,7 +122,7 @@ isCoreDecl con = mergeErrors isCoreDecl' where
 
 -- Clauses of a function binding. 
 isCoreMatch :: SyntaxConfig -> Match -> Either [CoreError] Bool
-isCoreMatch con (Match src _ ps t r b) = if (enableFunBind con) 
+isCoreMatch con (Match src _ ps t r b) = if enableFunBind con
     then appendErrors (isCoreBinds con src b)
         (isCoreTypeResult t
         -- update names with local variable
@@ -141,68 +141,68 @@ isCorePat :: SyntaxConfig -> SrcLoc -> Pat -> Either [CoreError] Bool
 isCorePat con src (PVar n) = singletonErrors (isCoreName con src n)
 isCorePat con src (PLit l) = if enablePLit con 
     then singletonErrors (isCoreLiterial con src l)
-    else Left [(NotAllowed "PLit" src)]
-isCorePat _ src (PNeg _) = Left [(NotAllowed "PNeg" src)]
-isCorePat _ src (PNPlusK {}) = Left [(NotAllowed "PNPlusK" src)]
+    else Left [NotAllowed "PLit" src]
+isCorePat _ src (PNeg _) = Left [NotAllowed "PNeg" src]
+isCorePat _ src (PNPlusK {}) = Left [NotAllowed "PNPlusK" src]
 isCorePat con src (PInfixApp p1 qn p2) = if enablePInfixApp con
     then appendErrors (isCoreQName con src qn)  
         (isCorePat con src p1 `addErrors` isCorePat con src p2)
-    else Left [(NotAllowed "PInfixApp" src)]
-isCorePat _ src (PApp {}) = Left [(NotAllowed "PApp" src)]
-isCorePat _ src (PTuple {}) = Left [(NotAllowed "PTuple" src)]
+    else Left [NotAllowed "PInfixApp" src]
+isCorePat _ src (PApp {}) = Left [NotAllowed "PApp" src]
+isCorePat _ src (PTuple {}) = Left [NotAllowed "PTuple" src]
 isCorePat con src (PList ps) = if enablePLit con 
     then mergeErrors (isCorePat con src) ps
-    else Left [(NotAllowed "PList" src)]
+    else Left [NotAllowed "PList" src]
 isCorePat con src (PParen p) = if enablePParen con 
     then isCorePat con src p 
-    else Left [(NotAllowed "PParen" src)] 
-isCorePat _ src (PRec {}) = Left [(NotAllowed "PRec" src)]
-isCorePat _ src (PAsPat {}) = Left [(NotAllowed "PAsPat" src)]
+    else Left [NotAllowed "PParen" src] 
+isCorePat _ src (PRec {}) = Left [NotAllowed "PRec" src]
+isCorePat _ src (PAsPat {}) = Left [NotAllowed "PAsPat" src]
 isCorePat con src (PWildCard) = if enablePWildCard con
     then Right True
-    else Left [(NotAllowed "PWildCard" src)]
-isCorePat _ src (PIrrPat _) = Left [(NotAllowed "PIrrPat" src)]
-isCorePat _ src (PatTypeSig {}) = Left [(NotAllowed "PatTypeSig" src)]
-isCorePat _ src (PViewPat {}) = Left [(NotAllowed "PViewPat" src)]
-isCorePat _ src (PRPat _) = Left [(NotAllowed "PRPat" src)]
-isCorePat _ src (PXTag {}) = Left [(NotAllowed "PXTag" src)]
-isCorePat _ src (PXETag {}) = Left [(NotAllowed "PXETag" src)]
-isCorePat _ src (PXPcdata _) = Left [(NotAllowed "PXPcdata" src)]
-isCorePat _ src (PXPatTag _) = Left [(NotAllowed "PXPatTag" src)]
-isCorePat _ src (PXRPats _) = Left [(NotAllowed "PXRPats" src)]
-isCorePat _ src (PExplTypeArg {}) = Left [(NotAllowed "PExplTypeArg" src)]
-isCorePat _ src (PQuasiQuote {}) = Left [(NotAllowed "PQuasiQuote" src)]
-isCorePat _ src (PBangPat _) = Left [(NotAllowed "PBangPat" src)]
+    else Left [NotAllowed "PWildCard" src]
+isCorePat _ src (PIrrPat _) = Left [NotAllowed "PIrrPat" src]
+isCorePat _ src (PatTypeSig {}) = Left [NotAllowed "PatTypeSig" src]
+isCorePat _ src (PViewPat {}) = Left [NotAllowed "PViewPat" src]
+isCorePat _ src (PRPat _) = Left [NotAllowed "PRPat" src]
+isCorePat _ src (PXTag {}) = Left [NotAllowed "PXTag" src]
+isCorePat _ src (PXETag {}) = Left [NotAllowed "PXETag" src]
+isCorePat _ src (PXPcdata _) = Left [NotAllowed "PXPcdata" src]
+isCorePat _ src (PXPatTag _) = Left [NotAllowed "PXPatTag" src]
+isCorePat _ src (PXRPats _) = Left [NotAllowed "PXRPats" src]
+isCorePat _ src (PExplTypeArg {}) = Left [NotAllowed "PExplTypeArg" src]
+isCorePat _ src (PQuasiQuote {}) = Left [NotAllowed "PQuasiQuote" src]
+isCorePat _ src (PBangPat _) = Left [NotAllowed "PBangPat" src]
 
 isCoreType :: SyntaxConfig -> SrcLoc -> Type -> Either [CoreError] Bool
 --isCoreType _ _ Nothing = Right True
 isCoreType con src (TyForall Nothing as t ) = 
-    (mergeErrors (isCoreAsst con src) as)
+    mergeErrors (isCoreAsst con src) as
     `addErrors` isCoreType con src t
 isCoreType con src (TyFun t1 t2) = 
     isCoreType con' src t1 `addErrors` isCoreType con' src t2
     where con' = updatedTypes (getTypesFromType t1) con
 -- ignore the difference between boxed or unboxed tuple
-isCoreType con src (TyTuple _ ts) = (mergeErrors (isCoreType con src) ts)
+isCoreType con src (TyTuple _ ts) = mergeErrors (isCoreType con src) ts
 isCoreType con src (TyList t) = isCoreType con src t
-isCoreType con src (TyApp {}) = Left [(NotAllowed "TyApp" src)]
+isCoreType _ src (TyApp {}) = Left [NotAllowed "TyApp" src]
 -- add types to names list, because Language.Haskell.Exts
 -- use Name to constuct Type.
 isCoreType con src (TyVar n) = singletonErrors (isCoreName con' src n) 
     where con' = updatedNames (getTypes con) con
 isCoreType con src (TyCon qn) = singletonErrors (isCoreQName con' src qn) 
     where con' = updatedNames (getTypes con) con
-isCoreType con src (TyParen _) = Left [(NotAllowed "TyParen" src)]
-isCoreType con src (TyInfix {}) = Left [(NotAllowed "TyInfix" src)]
-isCoreType con src (TyKind {}) = Left [(NotAllowed "TyKind" src)]
+isCoreType _ src (TyParen _) = Left [NotAllowed "TyParen" src]
+isCoreType _ src (TyInfix {}) = Left [NotAllowed "TyInfix" src]
+isCoreType _ src (TyKind {}) = Left [NotAllowed "TyKind" src]
 
 isCoreAsst :: SyntaxConfig -> SrcLoc -> Asst -> Either [CoreError] Bool
 isCoreAsst con src (ClassA qn ts) = appendErrors (isCoreQName con' src qn)
     (mergeErrors (isCoreType con src) ts)
     where con' = updatedNames (getTypes con) con
-isCoreAsst con src (InfixA {}) = Left [NotAllowed "InfixA" src]
-isCoreAsst con src (IParam {}) = Left [NotAllowed "IParam" src] 
-isCoreAsst con src (EqualP {}) = Left [NotAllowed "EqualP" src]
+isCoreAsst _ src (InfixA {}) = Left [NotAllowed "InfixA" src]
+isCoreAsst _ src (IParam {}) = Left [NotAllowed "IParam" src] 
+isCoreAsst _ src (EqualP {}) = Left [NotAllowed "EqualP" src]
 
 isCoreRhs :: SyntaxConfig -> SrcLoc -> Rhs -> Either [CoreError] Bool
 isCoreRhs con src (UnGuardedRhs expr) = isCoreExp con src expr
@@ -210,7 +210,7 @@ isCoreRhs con src (GuardedRhss rhs) = if enableGuardedRhss con
     then mergeErrors (isCoreGuardedRhs src) rhs
     else Left [NotAllowed "GuardedRhss" src]
     where isCoreGuardedRhs _ (GuardedRhs src' ss e) =
-            (mergeErrors (isCoreStmt con src') ss)
+            mergeErrors (isCoreStmt con src') ss
             `addErrors` isCoreExp con src' e
 
 isCoreBinds :: SyntaxConfig -> SrcLoc -> Binds -> Either CoreError Bool
@@ -349,7 +349,7 @@ isCoreLiterial _ src (PrimChar _) = Left (NotAllowed "PrimChar" src)
 isCoreLiterial _ src (PrimString _) = Left (NotAllowed "PrimString" src)
 
 isCoreName :: SyntaxConfig -> SrcLoc -> Name -> Either CoreError Bool
-isCoreName con src (Ident i) = if i `elem` (getNames con) 
+isCoreName con src (Ident i) = if i `elem` getNames con
     ++ ["div", "mod", "not", "head", "tail", "False", "True"] 
     -- H1-simple.pdf
     ++ ["null", "length", "elem"]
@@ -362,7 +362,7 @@ isCoreName con src (Ident i) = if i `elem` (getNames con)
     -- H6-Accumulators
     ++ ["max", "min"]
     then Right True else Left (NotAllowed (show i) src)
-isCoreName con src (Symbol s) = if s `elem` (getSymbols con) ++
+isCoreName con src (Symbol s) = if s `elem` getSymbols con ++
     ["+", "-", "*", "&&", "||", "==", "/=", "<=", ">=", "<", ">"]
     then Right True else Left (NotAllowed (show s) src)
 
@@ -423,10 +423,10 @@ getModule mPath = do
     return . fromParseResult $ parseModule src
 
  --below just used for test the parse result of haskell-src-ext
-printAlldecl :: Module -> IO()
-printAlldecl (Module _ _ _ _ _ _ ds) = mapM_  print ds
+--printAlldecl :: Module -> IO()
+--printAlldecl (Module _ _ _ _ _ _ ds) = mapM_  print ds
 
-main :: IO () 
-main = do
-  m <- getModule "Hello.hs"
-  printAlldecl m
+--main :: IO () 
+--main = do
+--  m <- getModule "Hello.hs"
+--  printAlldecl m
