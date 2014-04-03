@@ -1,36 +1,37 @@
 module Main where
 
-import Data.List
+import Data.List (isSuffixOf)
 import Language.Haskell.Interpreter
 import SyntaxChecker
 import System.Console.Haskeline
 import System.Environment (getArgs)
+import SyntaxConfig
 
 main :: IO ()
 main = do
     fPath <- getFile
-
+    con <- getConfig
     case fPath of
-        "" -> run [] fPath
+        "" -> run con fPath
         _  -> do
             m <- getModule fPath
-            let ns = getNames m
-            case isCoreModule ns m of
-                Right _ -> run ns fPath
+            let con' = updatedNames (getNamesFromTop m) con
+            case isCoreModule con' m of
+                Right _ -> run con' fPath
                 Left errs -> error (concatMap show errs)
 
-run :: [String] -> String -> IO ()
-run ns fPath = runInputT defaultSettings (loop fPath) where
-        loop :: String -> InputT IO ()
-        loop fp = do
+run :: SyntaxConfig -> String -> IO ()
+run con fPath = runInputT defaultSettings loop where
+        loop :: InputT IO ()
+        loop = do
             minput <- getInputLine "Prelude> "
             case minput of
                 Nothing -> return ()
                 Just "quit" -> return ()
                 Just input -> do
-                    rst <- liftIO (evaluate ns fp input)
+                    rst <- liftIO (evaluate con fPath input)
                     outputStrLn $ "Result: " ++ rst
-                    loop fp
+                    loop
 
 getFile :: IO String
 getFile = do
@@ -42,36 +43,35 @@ getFile = do
             else error "This is not a vaild haskell source file.")
         _ -> return (error "You can't supply more than one file.")
 
-evaluate :: [String] -> String -> String -> IO String
-evaluate ns fPath expr = do
-    r <- runInterpreter (evaluate' ns fPath expr)
+evaluate :: SyntaxConfig -> String -> String -> IO String
+evaluate con fPath expr = do
+    r <- runInterpreter evaluate'
     case r of
         Left  err -> return (show err)
         Right rst -> return rst
-
-
-evaluate' :: [String] -> String -> String -> InterpreterT IO String
-evaluate' ns fPath expr = do
-    -- you can't end with ...hs\ or ...hs/
-    -- todo -3??
-    let mPath = take (length fPath -3) fPath
-    case mPath of
-        "" -> evalExpr expr
-        _  -> do
-            loadFile mPath
-            --liftIO (putStrLn ("Module Loaded: " ++ mPath))
-            evalExpr expr
-        where
-            -- Only test with current directory
-            loadFile mPath = do
-                loadModules [mPath ++ ".hs"]
-                -- todo handle custom module name, instead of harded coded Main
-                setTopLevelModules ["Main"]
-                --getModuleExports mPath
-            evalExpr expression =  
-                case isCoreExpression ns expr of 
-                    Right _ -> do
-                        setImportsQ [("Prelude", Nothing)]
-                        result <- eval expression
-                        return (show result)
-                    Left errs -> return (concat (map show errs))
+    where
+    evaluate' :: InterpreterT IO String
+    evaluate' = do
+        -- you can't end with ...hs\ or ...hs/
+        -- todo -3??
+        let mPath = take (length fPath -3) fPath
+        case mPath of
+            "" -> evalExpr expr
+            _  -> do
+                loadFile mPath
+                --liftIO (putStrLn ("Module Loaded: " ++ mPath))
+                evalExpr expr
+            where
+                -- Only test with current directory
+                loadFile mPath = do
+                    loadModules [mPath ++ ".hs"]
+                    -- todo handle custom module name, instead of harded coded Main
+                    setTopLevelModules ["Main"]
+                    --getModuleExports mPath
+                evalExpr expression =  
+                    case isCoreExpression con expr of 
+                        Right _ -> do
+                            setImportsQ [("Prelude", Nothing)]
+                            result <- eval expression
+                            return (show result)
+                        Left errs -> return (concat (map show errs))
