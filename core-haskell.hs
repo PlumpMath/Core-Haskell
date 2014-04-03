@@ -1,7 +1,7 @@
 module Main where
 
 import Data.List (isSuffixOf)
-import Language.Haskell.Interpreter
+import Language.Haskell.Interpreter 
 import SyntaxChecker
 import System.Console.Haskeline
 import System.Environment (getArgs)
