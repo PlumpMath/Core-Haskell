@@ -437,10 +437,10 @@ getModule mPath = do
     return . fromParseResult $ parseModule src
 
  --below just used for test the parse result of haskell-src-ext
-printAlldecl :: Module -> IO()
-printAlldecl (Module _ _ _ _ _ _ ds) = mapM_  print ds
+--printAlldecl :: Module -> IO()
+--printAlldecl (Module _ _ _ _ _ _ ds) = mapM_  print ds
 
-main :: IO () 
-main = do
-  m <- getModule "Hello.hs"
-  printAlldecl m
+--main :: IO () 
+--main = do
+--  m <- getModule "Hello.hs"
+--  printAlldecl m
