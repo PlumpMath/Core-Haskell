@@ -1,6 +1,6 @@
 { 
     "names": [], 
-    "symbols": [],
+    "symbols": ["++"],
     "type_sig": false,
     "fun_bind": false,
     "p_paren": false,

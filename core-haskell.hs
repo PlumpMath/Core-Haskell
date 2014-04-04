@@ -11,7 +11,6 @@ main :: IO ()
 main = do
     fPath <- getFile
     con <- getConfig
-    print con
     case fPath of
         "" -> run con fPath
         _  -> do
