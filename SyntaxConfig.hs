@@ -97,7 +97,6 @@ instance FromJSON SyntaxConfig where
         SyntaxConfig 
             <$> liftM V.toList (v .: "names")
             <*> liftM V.toList (v .: "symbols")
-            <*> v .: "type_sig"
             <*> v .: "fun_bind"
             <*> v .: "p_paren"
             <*> v .: "p_list"
@@ -106,6 +105,7 @@ instance FromJSON SyntaxConfig where
             <*> v .: "p_wild_card"
             <*> v .: "list_comp"
             <*> v .: "enum_from"
+            <*> v .: "type_sig"
             <*> liftM V.toList (v .: "types")
             <*> v .: "frac"
             <*> v .: "string"

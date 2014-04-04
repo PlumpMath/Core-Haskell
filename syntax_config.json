@@ -8,7 +8,7 @@
     "p_lit": true,
     "p_infix_app": true,
     "p_wild_card": true,
-    "list_comp": true,
+    "list_comp": false,
     "enum_from": true,
     "types": ["Int", "Num", "Integer", "Bool", "Eq"],
     "frac": true,
