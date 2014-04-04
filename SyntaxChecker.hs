@@ -70,7 +70,6 @@ isCoreWarningText _ = Left (NotAllowedHeader "WarningText")
 -- Disable all export specification
 isCoreExportSpec :: Maybe [ExportSpec] -> Either CoreError Bool
 isCoreExportSpec Nothing = Right True
---todo?
 isCoreExportSpec (Just [EVar (UnQual (Ident n))]) | n == "main" = Right True
 isCoreExportSpec _ = Left (NotAllowedHeader "ExportSpec")
 
@@ -144,23 +143,22 @@ isCoreMatch con (Match src _ ps t r b) = if enableFunBind con
 
 -- A pattern, to be matched against a value. 
 isCorePat :: SyntaxConfig -> SrcLoc -> Pat -> Either [CoreError] Bool
-isCorePat con src (PVar n) = singletonErrors (isCoreName con src n)
-isCorePat con src (PLit l) = if enablePLit con 
-    then singletonErrors (isCoreLiterial con src l)
+isCorePat _ _ (PVar _) = Right True
+isCorePat con src (PLit _) = if enablePLit con 
+    then Right True
     else Left [NotAllowed "PLit" src]
 isCorePat _ src (PNeg _) = Left [NotAllowed "PNeg" src]
 isCorePat _ src (PNPlusK {}) = Left [NotAllowed "PNPlusK" src]
-isCorePat con src (PInfixApp p1 qn p2) = if enablePInfixApp con
-    then appendErrors (isCoreQName con src qn)  
-        (isCorePat con src p1 `addErrors` isCorePat con src p2)
+isCorePat con src (PInfixApp {}) = if enablePInfixApp con
+    then Right True
     else Left [NotAllowed "PInfixApp" src]
 isCorePat _ src (PApp {}) = Left [NotAllowed "PApp" src]
 isCorePat _ src (PTuple {}) = Left [NotAllowed "PTuple" src]
-isCorePat con src (PList ps) = if enablePLit con 
-    then mergeErrors (isCorePat con src) ps
+isCorePat con src (PList _) = if enablePLit con 
+    then Right True
     else Left [NotAllowed "PList" src]
-isCorePat con src (PParen p) = if enablePParen con 
-    then isCorePat con src p 
+isCorePat con src (PParen _) = if enablePParen con 
+    then Right True
     else Left [NotAllowed "PParen" src] 
 isCorePat _ src (PRec {}) = Left [NotAllowed "PRec" src]
 isCorePat _ src (PAsPat {}) = Left [NotAllowed "PAsPat" src]
@@ -439,10 +437,10 @@ getModule mPath = do
     return . fromParseResult $ parseModule src
 
  --below just used for test the parse result of haskell-src-ext
---printAlldecl :: Module -> IO()
---printAlldecl (Module _ _ _ _ _ _ ds) = mapM_  print ds
+printAlldecl :: Module -> IO()
+printAlldecl (Module _ _ _ _ _ _ ds) = mapM_  print ds
 
---main :: IO () 
---main = do
---  m <- getModule "Hello.hs"
---  printAlldecl m
+main :: IO () 
+main = do
+  m <- getModule "Hello.hs"
+  printAlldecl m

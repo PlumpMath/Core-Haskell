@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 
---module SyntaxConfig (getConfig, SyntaxConfig(..), updatedNames) where
 module SyntaxConfig (
     SyntaxConfig,
     getNames,
